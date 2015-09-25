@@ -63,15 +63,23 @@
 		visibility: hidden;
 	}
 
+	.left {
+		display: inline;
+		float: right;
+		color: #595E6B;
+		border-right: 2px solid #21252D;
+		padding-right: 10px; padding-left: 10px;
+	}
+
 	</style>
 	<body>
 		<p class="title">NODBEN v1.0</p>
-		<p>Application Stats</p>
+		<p>Application Stats <span class="left" id="uptime">Up time: 00:00.51</span><span class="left" id="cpu">CPU: 0.5%</span><span class="left" id="mem">MEM: 110M</span><span class="left" id="pid">PID: 000</span></p>
 		<div class="clearfix">
 			<div id="graphCPU" style="width: 50%; display: inline; float: left;"></div>
 			<div id="graphMEM" style="width: 50%; display: inline; float: right;"></div>
 		</div>
-		<p>Computer Stats</p>
+		<p>Computer Stats <span class="left" id="cpuidle">CPU IDLE: 0</span><span class="left" id="cpuuser">CPU USER: 0</span><span class="left" id="cpusys">CPU SYS: 0</span><span class="left" id="netin">NET IN: 0</span><span class="left" id="netout">NET OUT: 0</span><span class="left" id="diskread">DISK READ: 0</span><span class="left" id="diskwrite">DISK WRITE: 0</span></p>
 		<div class="clearfix">
 			<div id="graphTotal" style="width: 33.33%; display: inline; float: left;"></div>
 			<div id="graphTotalNet" style="width: 33.33%; display: inline; float: left;"></div>
@@ -189,6 +197,19 @@
 					diskChart.MaxValue = dmax * 2;
 					diskChart.Init();
 				}
+
+				document.getElementById("uptime").innerHTML = "Up time: " + data.process.time;
+				document.getElementById("cpu").innerHTML = "CPU: " + data.process.cpu + "%";
+				document.getElementById("mem").innerHTML = "MEM: " + data.process.mem;
+				document.getElementById("pid").innerHTML = "PID: " + data.process.pid;
+
+				document.getElementById("cpuidle").innerHTML = "CPU IDLE: " + data.computer.cpu.idle;
+				document.getElementById("cpuuser").innerHTML = "CPU USER: " + data.computer.cpu.user;
+				document.getElementById("cpusys").innerHTML = "CPU SYS: " + data.computer.cpu.sys;
+				document.getElementById("netin").innerHTML = "NET IN: " + data.computer.networks.in_size;
+				document.getElementById("netout").innerHTML = "NET OUT: " + data.computer.networks.out_size;
+				document.getElementById("diskwrite").innerHTML = "DISK WRITE: " + data.computer.disk.write_size;
+				document.getElementById("diskread").innerHTML = "DISK READ: " + data.computer.disk.read_size;
 
 			});
 
