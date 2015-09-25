@@ -1,0 +1,197 @@
+<html>
+	<head>
+		<title>Node Benchmark</title>
+		<link href='https://fonts.googleapis.com/css?family=Roboto+Condensed' rel='stylesheet' type='text/css'>
+		<script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+		<script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
+		<script type="text/javascript" src="chart.js"></script>
+	</head>
+	<style>
+	* {
+		font-family: 'Roboto Condensed', sans-serif;
+	}
+	html,body {
+		background: #21252D;
+		padding: 0; margin: 0;
+		width: 100%; height: 100%;
+	}
+	svg {
+	  font: 15px sans-serif;
+	  fill:#595E6B;
+	}
+
+	.line {
+	  fill: none;
+	  stroke: #000;
+	  stroke-width: 1.5px;
+	}
+
+	.axis path,
+	.axis line {
+	  fill: none;
+	  stroke: #3C4353;
+	  shape-rendering: crispEdges;
+	}
+
+	.chart-title {
+		font-weight: bold;
+		fill: #979FAF;
+	}
+
+	text[style="text-anchor: end;"] {
+		font-size: 0.8em;
+	}
+
+	p {
+		padding: 10px; margin: 0;
+		background: #1E2127;
+		color: #979FAF;
+	}
+
+	p.title {
+		padding: 20px;
+		margin: 0;
+		padding-left: 10px;
+		font-size: 2.0em;
+		background: #191B20;
+	}
+
+	.clearfix::after {
+		content: ".";
+		display: block;
+		clear: both;
+		visibility: hidden;
+	}
+
+	</style>
+	<body>
+		<p class="title">NODBEN v1.0</p>
+		<p>Application Stats</p>
+		<div class="clearfix">
+			<div id="graphCPU" style="width: 50%; display: inline; float: left;"></div>
+			<div id="graphMEM" style="width: 50%; display: inline; float: right;"></div>
+		</div>
+		<p>Computer Stats</p>
+		<div class="clearfix">
+			<div id="graphTotal" style="width: 33.33%; display: inline; float: left;"></div>
+			<div id="graphTotalNet" style="width: 33.33%; display: inline; float: left;"></div>
+			<div id="graphTotalDisk" style="width: 33.33%; display: inline; float: right;"></div>
+		</div>
+
+		<script>
+			var maxCPU = 0; var maxMEM = 0;
+			var count = 0; var memCount = 0;
+
+			var appChart = new chartRT("#graphCPU");
+			appChart.yText = "CPU Usage %";
+			appChart.titleText = "Application CPU Usage";
+			appChart.Ticks = 60;
+			appChart.MaxValue = 10;
+			appChart.Init();
+			appChart.addSeries("CPU");
+
+			var appMemChart = new chartRT("#graphMEM");
+			appMemChart.yText = "Memory Usage %";
+			appMemChart.titleText = "Application Memory Usage";
+			appMemChart.Ticks = 60;
+			appMemChart.MaxValue = 512;
+			appMemChart.Init();
+			appMemChart.addSeries("MEM");
+
+			var chart = new chartRT("#graphTotal");
+			chart.yText = "CPU Usage %";
+			chart.titleText = "Total CPU Usage";
+			chart.Ticks = 30;
+			chart.MaxValue = 100;
+			chart.Init();
+
+			//chart.addSeries("Application");
+			chart.addSeries("Idle");
+			chart.addSeries("User");
+			chart.addSeries("System");
+
+			var netChart = new chartRT("#graphTotalNet");
+			netChart.yText = "Network Usage (MB)";
+			netChart.titleText = "Total Network Usage";
+			netChart.Ticks = 30;
+			netChart.MaxValue = 100;
+			netChart.Init();
+
+			//chart.addSeries("Application");
+			netChart.addSeries("Sent");
+			netChart.addSeries("Received");
+
+			var diskChart = new chartRT("#graphTotalDisk");
+			diskChart.yText = "Disk Usage (MB)";
+			diskChart.titleText = "Total Disk Usage";
+			diskChart.Ticks = 30;
+			diskChart.MaxValue = 100;
+			diskChart.Init();
+
+			//chart.addSeries("Application");
+			diskChart.addSeries("Read");
+			diskChart.addSeries("Write");
+
+			var socket = io();
+			socket.emit('hello');
+			socket.on('benchmark', function(data) {
+				var processCPU = parseFloat(data.process.cpu.replace('%',''));
+				appChart.chartSeries["CPU"] = processCPU;
+
+				if (count > 1) {
+					if (processCPU > maxCPU) {
+						maxCPU = processCPU + (processCPU * 10 / 100);
+						appChart.MaxValue = maxCPU;
+						appChart.Init();
+					}
+				} else {
+					count = count + 1;
+				}
+
+				var processMEM = parseFloat(data.process.mem.replace(/[BKMGT]/g,''));
+				appMemChart.chartSeries["MEM"] = processMEM;
+
+				if (memCount > 1) {
+					if (processMEM > maxMEM) {
+						maxMEM = processMEM * 2;
+						appMemChart.MaxValue = maxMEM;
+						appMemChart.Init();
+					}
+				} else {
+					memCount = memCount + 1;
+				}
+
+				var totalCPUIdle = Math.floor(parseFloat(data.computer.cpu.idle.replace('%','')));
+				var totalCPUUser = Math.floor(parseFloat(data.computer.cpu.user.replace('%','')));
+				var totalCPUSys = Math.floor(parseFloat(data.computer.cpu.sys.replace('%','')));
+				chart.chartSeries["Idle"] = totalCPUIdle;
+				chart.chartSeries["User"] = totalCPUUser;
+				chart.chartSeries["System"] = totalCPUSys;
+
+				var totalNetSent = Math.floor(parseFloat(data.computer.networks.out_size.replace(/BKMGT/g,'')));
+				var totalNetReceived = Math.floor(parseFloat(data.computer.networks.in_size.replace(/BKMGT/,'')));
+				netChart.chartSeries["Sent"] = totalNetSent;
+				netChart.chartSeries["Received"] = totalNetReceived;
+
+				if (totalNetSent > netChart.MaxValue || totalNetReceived > netChart.MaxValue) {
+					var max = (totalNetSent > totalNetReceived) ? totalNetSent : totalNetReceived;
+					netChart.MaxValue = max * 2;
+					netChart.Init();
+				}
+
+				var totalDiskWrite = Math.floor(parseFloat(data.computer.disk.write_size.replace(/BKMGT/g,'')));
+				var totalDiskRead = Math.floor(parseFloat(data.computer.disk.read_size.replace(/BKMGT/,'')));
+				diskChart.chartSeries["Write"] = totalDiskWrite;
+				diskChart.chartSeries["Read"] = totalDiskRead;
+
+				if (totalDiskWrite > diskChart.MaxValue || totalDiskRead > diskChart.MaxValue) {
+					var dmax = (totalDiskWrite > totalDiskRead) ? totalDiskWrite : totalDiskRead;
+					diskChart.MaxValue = dmax * 2;
+					diskChart.Init();
+				}
+
+			});
+
+		</script>
+	</body>
+</html>

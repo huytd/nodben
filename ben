@@ -1,0 +1,11 @@
+#!/usr/local/bin/node
+
+// Usage: ben <pid>
+// or   : ./ben <pid>
+
+var Benchmark = require('./app');
+var params = process.argv;
+var pid = params[2];
+console.log(pid);
+var ben = new Benchmark();
+ben.start(pid);

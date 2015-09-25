@@ -1,0 +1,15 @@
+{
+    "name": "node-benchmark",
+    "version": "1.0.0",
+    "description": "NodeJS Benchmark and Profiling tool for any running process",
+    "main": "app.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "Henry Tr.",
+    "license": "ISC",
+    "devDependencies": {
+        "express": "^4.13.3",
+        "socket.io": "^1.3.7"
+    }
+}
